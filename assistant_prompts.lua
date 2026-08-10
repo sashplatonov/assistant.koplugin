@@ -7,6 +7,7 @@ local T = require("ffi/util").template
 -- {title}  : book title from metadata
 -- {author} : book author from metadata
 -- {highlight}  : selected texts
+-- {context}   : local context around the selected text
 -- {language}   : the `response_language` variable defined above
 -- {user_input} : user input from the input dialog
 -- {progress}   : the progress percentage of the book
@@ -552,13 +553,13 @@ Explain "{word}" as used in "{title}" by {author}, strictly based on the context
 3. **Output**: Start directly with the structured analysis. Do NOT include any introductory or concluding commentary.
 
 ## Output Structure
-* ** %1 **: Vocabulary in original conjugation if different from the form in the sentence.
-* ** %2 **: Up to 3 synonyms, noting which are most relevant to the book's usage.
-* ** %3 **: Literal meaning of the expression without any context.
-* ** %4 **: Translation of the whole sentence containing the word. Highlight **{word}** in bold.
-* ** %5 **: How "{word}" is specifically used in THIS BOOK. Explain what it suggests about characters, tone, or themes.
-* ** %6 **: Another example sentence showing the word's use, preferably from the same literary genre.
-* ** %7 **: Origins, etymology, or significance of the word.
+* **%1**: Vocabulary in original conjugation if different from the form in the sentence.
+* **%2**: Up to 3 synonyms, noting which are most relevant to the book's usage.
+* **%3**: Literal meaning of the expression without any context.
+* **%4**: Translation of the whole sentence containing the word. Highlight **{word}** in bold.
+* **%5**: How "{word}" is specifically used in THIS BOOK. Explain what it suggests about characters, tone, or themes.
+* **%6**: Another example sentence showing the word's use, preferably from the same literary genre.
+* **%7**: Origins, etymology, or significance of the word.
 ]],
             -- @translators used in the dictionary.
             _("Conjugation"),

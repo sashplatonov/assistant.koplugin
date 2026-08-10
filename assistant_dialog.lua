@@ -19,6 +19,7 @@ local Device = require("device")
 local Screen = Device.screen
 local CheckButton = require("ui/widget/checkbutton")
 local ASUtils = require("assistant_utils")
+local CustomPromptContext = require("assistant_custom_prompt_context")
 local extractBookTextForAnalysis = ASUtils.extractBookTextForAnalysis
 local normalizeMarkdownHeadings = ASUtils.normalizeMarkdownHeadings
 local NetworkMgr = require("ui/network/manager")
@@ -47,12 +48,26 @@ function AssistantDialog:_close()
   end
 end
 
-function AssistantDialog:_formatUserPrompt(user_prompt, highlightedText, user_input)
+function AssistantDialog:_formatUserPrompt(user_prompt, highlightedText, user_input, prompt_config, context_highlight)
   local book = self:_getBookContext()
   
   -- Handle case where no text is highlighted (gesture-triggered)
   local text_to_use = highlightedText and highlightedText ~= "" and highlightedText or ""
   local language = self.assistant.settings:readSetting("response_language") or self.assistant.ui_language
+  local context = ""
+  if prompt_config and user_prompt:find("{context}", 1, true) then
+    local loading = InfoMessage:new{
+      icon = "book.opened",
+      text = ASUtils.bold_format(_("<b>Reading selected text context...</b>")),
+    }
+    UIManager:show(loading)
+    UIManager:forceRePaint()
+    context = CustomPromptContext.getContext(self.CONFIGURATION, self.assistant.ui, context_highlight or text_to_use)
+    UIManager:close(loading)
+    if not context or context == "" then
+      return nil, _("Unable to read the local context for the selected text.")
+    end
+  end
   
   -- Calculate progress if placeholder is present  
   local formatted_progress = nil
@@ -72,14 +87,16 @@ function AssistantDialog:_formatUserPrompt(user_prompt, highlightedText, user_in
   end
 
   -- replace placeholders in the user prompt
-  return user_prompt:gsub("{([%w%_]+)}", {
+  local formatted_prompt = user_prompt:gsub("{([%w%_]+)}", {
     title = book.title,
     author = book.author,
     language = language,
     highlight = text_to_use,
     user_input = user_input,
     progress = formatted_progress,
+    context = context,
   })
+  return formatted_prompt
 
 end
 
@@ -218,9 +235,15 @@ function AssistantDialog:_createAndShowViewer(highlightedText, message_history, 
           viewer_title = Prompts.getDisplayText(user_question.text or "Custom Prompt",
             user_question.use_websearch or false,
             Prompts.isWebSearchEnabled(self.assistant.settings))
+          local user_content, context_error = self:_formatUserPrompt(user_question.user_prompt, current_highlight,
+            user_question.user_input or "", user_question)
+          if context_error then
+            UIManager:show(InfoMessage:new{ icon = "notice-warning", text = context_error })
+            return
+          end
           local _user = {
             role = "user",
-            content = self:_formatUserPrompt(user_question.user_prompt, current_highlight, user_question.user_input or ""),
+            content = user_content,
           }
           -- set these attributes in metatable (won't be encoded to API calls)
           ASUtils.set_attr(_user, "user_input", user_question.user_input)
@@ -537,9 +560,15 @@ function AssistantDialog:showPrompt(highlightedText, prompt_index, user_input)
     koutil.tableGetValue(prompt_config, "use_websearch") or false,
     Prompts.isWebSearchEnabled(self.assistant.settings))
 
+  local context_highlight = highlightedText
   highlightedText = highlightedText:gsub("\n", "\n\n") -- ensure newlines are doubled (LLM presumes markdown input)
 
-  local user_content = self:_formatUserPrompt(koutil.tableGetValue(prompt_config, "user_prompt"), highlightedText, user_input or "")
+  local user_content, context_error = self:_formatUserPrompt(koutil.tableGetValue(prompt_config, "user_prompt"),
+    highlightedText, user_input or "", prompt_config, context_highlight)
+  if context_error then
+    UIManager:show(InfoMessage:new{ icon = "notice-warning", text = context_error })
+    return
+  end
   local system_prompt = koutil.tableGetValue(prompt_config, "system_prompt") or koutil.tableGetValue(Prompts, "assistant_prompts", "default", "system_prompt")
 
   if self.assistant.settings:readSetting("auto_prompt_suggest", false) then

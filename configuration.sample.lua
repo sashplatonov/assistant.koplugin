@@ -330,6 +330,10 @@ local CONFIGURATION = {
         max_text_length_for_analysis = 100000, -- max text length to be used on xray-recap-book analyzes,
         max_page_size_for_analysis = 250,      -- maximum page size to be used on xray-recap-book analyzes (for page-based documents, ex: PDF)
 
+        -- Number of words to request around a selected word for Dictionary and custom prompts using {context}.
+        -- The selected sentence is used when it already provides enough context; default fallback is 50 words.
+        highlight_context_words = 50,
+
         -- Term X-Ray context expansion settings (for analyzing characters, objects, places, concepts, magic)
         -- NOTE: The following settings are optimized to provide ~40k input tokens per term x-ray lookup, using ~10% of a 400k token context window.
         -- This allows rich analysis of characters, magic systems, plot elements, and relationships in fantasy books.
@@ -391,7 +395,7 @@ local CONFIGURATION = {
         -- The `show_on_main_popup` determines if the prompt is shown in the main popup
         -- The `show_on_dictionary_popup` determines if the prompt is shown in the dictionary popup ( max 6 including the built-in ones)
         -- Set `visible = false` to hide the prompt from all popups.
-        -- Available placeholders to use in the prompts: {user_input},{highlight},{title},{author},{language},{progress}
+        -- Available placeholders to use in the prompts: {user_input},{highlight},{context},{title},{author},{language},{progress}
         prompts = {
 
             -- hide some prompts to keep the UI clean
@@ -399,7 +403,7 @@ local CONFIGURATION = {
 
             --
             -- example of adding a user-defined prompt:
-            -- myprompt = { text ="Prompt Title", system_prompt = "you are a helpful assistant.", user_prompt = "describe the following text in detail: {highlight}", order = 50, show_on_main_popup = true, },
+            -- myprompt = { text ="Prompt Title", system_prompt = "you are a helpful assistant.", user_prompt = "Context: {context}\n\nAnalyze: {highlight}", order = 50, show_on_main_popup = true, },
 
         },
 

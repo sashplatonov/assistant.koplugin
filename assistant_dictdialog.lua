@@ -327,6 +327,7 @@ local term_xray_prompts = require("assistant_prompts").builtin_prompts.term_xray
     else
         -- Standard dictionary context extraction
         if ui.highlight and ui.highlight.getSelectedWordContext then
+            local context_words = koutil.tableGetValue(CONFIGURATION, "features", "highlight_context_words") or 50
             -- Helper function to count words in a string.
             local function countWords(str)
                 if not str or str == "" then return 0 end
@@ -345,9 +346,8 @@ local term_xray_prompts = require("assistant_prompts").builtin_prompts.term_xray
                     if word_start then
                         local prev_part = string.sub(sentence, 1, word_start - 1)
                         local next_part = string.sub(sentence, word_end + 1)
-
                         -- Check if the sentence context is too short on both sides.
-                        if countWords(prev_part) < 50 and countWords(next_part) < 50 then
+                        if countWords(prev_part) < context_words and countWords(next_part) < context_words then
                             -- The sentence is short, so we'll use the fallback to get more context.
                             use_fallback_context = true
                         else
@@ -363,7 +363,7 @@ local term_xray_prompts = require("assistant_prompts").builtin_prompts.term_xray
             -- Use the fallback method (word count) if we couldn't get a good sentence context.
             if use_fallback_context then
                 local success, prev, next = pcall(function()
-                    return ui.highlight:getSelectedWordContext(50)
+                    return ui.highlight:getSelectedWordContext(context_words)
                 end)
                 if success then
                     prev_context = prev or ""
