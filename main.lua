@@ -887,8 +887,8 @@ function Assistant:_buildAssistantDictButtons(dict_popup_arg, live)
       end
     end
 
-    -- Calculate how many custom prompts to add (max 3 total buttons)
-    local max_custom_to_add = math.max(0, 3 - enabled_count)
+    -- Calculate how many custom prompts to add (max 6 total buttons)
+    local max_custom_to_add = math.max(0, 6 - enabled_count)
     local custom_to_add = math.min(#custom_prompts, max_custom_to_add)
 
     -- Add custom prompts as buttons
